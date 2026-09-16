@@ -149,6 +149,10 @@ function render(): void {
         <a href="https://suimaire.github.io/">← HAFS 생화학 자료</a>
         <span>Standard proteinogenic amino acids | 20</span>
       </div>
+      <div class="footer-brand">
+        <p class="footer-brand__name">HAFS Biology Lab</p>
+        <p class="footer-brand__credit">Teacher-built interactive science tools · CH Park</p>
+      </div>
     </footer>
     ${renderDetailDialog()}
     ${renderResetDialog()}

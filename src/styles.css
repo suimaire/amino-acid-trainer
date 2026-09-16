@@ -1589,6 +1589,25 @@ dialog::backdrop {
   letter-spacing: 0.06em;
 }
 
+.footer-brand {
+  padding-top: 1rem;
+}
+
+.footer-brand p {
+  margin: 0;
+}
+
+.footer-brand__name {
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.footer-brand__credit {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 @media (max-width: 980px) {
   .header-inner {
     grid-template-columns: 1fr auto;
