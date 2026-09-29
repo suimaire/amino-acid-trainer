@@ -7,6 +7,7 @@ import {
   type AminoAcid,
   type CategoryId,
 } from './data/aminoAcids';
+import { AMINO_ACID_PROPERTIES, filterProperties, type AminoAcidProperty } from './data/aminoAcidProperties';
 import { masteredCount, updateMastery, type MasteryMap } from './lib/mastery';
 import {
   createQuiz,
@@ -20,7 +21,7 @@ import {
 import { createProgressStorage } from './lib/storage';
 import { renderChemicalStructures } from './ui/structure';
 
-type View = 'home' | 'overview' | 'flashcards' | 'quiz' | 'mastery';
+type View = 'home' | 'overview' | 'properties' | 'flashcards' | 'quiz' | 'mastery';
 type FlashCue = 'structure' | 'name' | 'threeLetter' | 'oneLetter';
 
 interface FlashSession {
@@ -47,6 +48,8 @@ let mastery: MasteryMap = progressStorage.load();
 let storageUnavailable = !progressStorage.isAvailable();
 let activeView: View = viewFromHash();
 let activeFilter: CategoryId | 'all' = 'all';
+let propertiesFilter: CategoryId | 'all' = 'all';
+let propertiesSearch = '';
 let selectedAcidId: string | null = null;
 let resetDialogOpen = false;
 let flashCue: FlashCue = 'structure';
@@ -57,6 +60,7 @@ let quizSession: QuizSession | null = null;
 
 const VIEW_LABELS: Record<Exclude<View, 'home'>, string> = {
   overview: '전체 보기',
+  properties: '특성표',
   flashcards: '플래시카드',
   quiz: '퀴즈',
   mastery: '암기 현황',
@@ -71,7 +75,7 @@ const FLASH_CUE_LABELS: Record<FlashCue, string> = {
 
 function viewFromHash(): View {
   const candidate = window.location.hash.slice(1) as View;
-  return ['overview', 'flashcards', 'quiz', 'mastery'].includes(candidate) ? candidate : 'home';
+  return ['overview', 'properties', 'flashcards', 'quiz', 'mastery'].includes(candidate) ? candidate : 'home';
 }
 
 function escapeHtml(value: string): string {
@@ -171,6 +175,8 @@ function renderView(): string {
   switch (activeView) {
     case 'overview':
       return renderOverview();
+    case 'properties':
+      return renderProperties();
     case 'flashcards':
       return renderFlashcards();
     case 'quiz':
@@ -183,8 +189,6 @@ function renderView(): string {
 }
 
 function renderHome(): string {
-  const learned = masteredCount(mastery);
-  const percentage = (learned / AMINO_ACIDS.length) * 100;
   return `
     <section class="home-hero page-shell" aria-labelledby="home-title">
       <div class="hero-copy">
@@ -197,19 +201,14 @@ function renderHome(): string {
           <a class="text-link" href="#overview">20종 전체 보기 <span aria-hidden="true">→</span></a>
         </div>
       </div>
-      <aside class="mastery-summary" aria-label="현재 암기 현황">
-        <div class="summary-heading">
-          <span class="eyebrow">MASTERED</span>
-          <strong>${learned}<small>/ 20</small></strong>
+      <figure class="hero-reference">
+        <div class="hero-reference-scroll" tabindex="0" role="region" aria-label="20종 아미노산 구조 참고 그림" aria-describedby="hero-reference-hint">
+          <a class="hero-reference-link" href="#properties" aria-label="20종 아미노산 구조와 곁사슬 분류 — 특성표 열기">
+            <img src="${import.meta.env.BASE_URL}assets/amino_acids_reference.svg" width="1800" height="1340" alt="20종 아미노산 구조와 곁사슬 분류" />
+          </a>
         </div>
-        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="20" aria-valuenow="${learned}">
-          <span style="width:${percentage}%"></span>
-        </div>
-        <div class="amino-ticks" aria-hidden="true">
-          ${AMINO_ACIDS.map((acid) => `<i class="${mastery[acid.id] === 3 ? 'is-mastered' : ''}"></i>`).join('')}
-        </div>
-        <p>${learned === 0 ? '첫 학습을 시작해 보세요.' : `${20 - learned}종을 더 익히면 완성입니다.`}</p>
-      </aside>
+        <figcaption id="hero-reference-hint"><span>구조와 분류를 한눈에<span class="hero-scroll-hint"> · 좌우로 스크롤해 보세요</span></span><a href="#properties">특성표 열기 <span aria-hidden="true">↗</span></a></figcaption>
+      </figure>
     </section>
     <section class="start-grid page-shell" aria-labelledby="start-heading">
       <div class="section-heading section-heading--compact">
@@ -273,6 +272,112 @@ function renderOverview(): string {
 
 function filterButton(id: CategoryId | 'all', label: string): string {
   return `<button class="filter-button" data-action="filter" data-filter="${id}" aria-pressed="${activeFilter === id}">${label}</button>`;
+}
+
+function renderProperties(): string {
+  const filtered = filterProperties(propertiesFilter, propertiesSearch);
+  return `
+    <section class="page-shell page-intro properties-intro" aria-labelledby="properties-title">
+      <span class="eyebrow">REFERENCE</span>
+      <div class="page-title-row">
+        <div>
+          <h1 id="properties-title">20가지 아미노산 특성표</h1>
+          <p>20종 단백질 구성 아미노산의 주요 물리화학적 성질을 한눈에 비교해 보세요.</p>
+        </div>
+        <span id="properties-count" class="result-count" role="status" aria-atomic="true">${filtered.length} / 20종</span>
+      </div>
+      <section class="properties-structure-reference" aria-labelledby="properties-structure-title">
+        <div class="properties-structure-heading">
+          <h2 id="properties-structure-title" class="eyebrow">STRUCTURAL REFERENCE</h2>
+          <a href="${import.meta.env.BASE_URL}assets/amino_acids_reference.svg" target="_blank" rel="noopener noreferrer" aria-label="구조 레퍼런스 크게 보기 (새 탭)">크게 보기 <span aria-hidden="true">↗</span></a>
+        </div>
+        <figure>
+          <div class="properties-structure-scroll" role="region" aria-label="20종 아미노산 구조 레퍼런스, 좁은 화면에서 가로 스크롤 가능" aria-describedby="properties-structure-caption" tabindex="0">
+            <img src="${import.meta.env.BASE_URL}assets/amino_acids_reference.svg" width="1800" height="1340" alt="20종 단백질 구성 아미노산의 구조와 R기 분류" />
+          </div>
+          <figcaption id="properties-structure-caption" class="properties-structure-caption">
+            <span>20종 아미노산의 공통 골격과 서로 다른 R기를 비교한 구조 레퍼런스입니다.</span>
+            <span class="properties-structure-scroll-hint">구조표를 좌우로 스크롤하세요 <span aria-hidden="true">↔</span></span>
+          </figcaption>
+        </figure>
+      </section>
+      <div class="properties-controls">
+        <div class="filter-bar" role="group" aria-label="특성표 분류 필터">
+          ${(['all', ...CATEGORY_IDS] as const).map((id) => {
+            const count = id === 'all' ? 20 : AMINO_ACID_PROPERTIES.filter((acid) => acid.category === id).length;
+            return `<button class="filter-button" data-action="properties-filter" data-filter="${id}" aria-pressed="${propertiesFilter === id}" aria-controls="properties-table">${id === 'all' ? '전체' : CATEGORIES[id].ko} <span>${count}</span></button>`;
+          }).join('')}
+        </div>
+        <label class="properties-search" for="properties-search">
+          <span>이름·약어 검색</span>
+          <input id="properties-search" type="search" value="${escapeHtml(propertiesSearch)}" placeholder="아미노산 이름, 3-letter, 1-letter 검색..." autocomplete="off" spellcheck="false" aria-controls="properties-table" aria-describedby="properties-search-hint" />
+          <small id="properties-search-hint">영문·한글 이름 또는 약어로 검색하세요. 영문 한 글자는 1-letter code로 찾습니다.</small>
+        </label>
+      </div>
+    </section>
+    <section class="page-shell properties-reference" aria-label="아미노산 물리화학적 특성">
+      <div class="properties-table-guide"><span>자유 아미노산 참고값</span><span id="properties-scroll-hint">좁은 화면에서는 표를 좌우로 스크롤하세요 <span aria-hidden="true">↔</span></span></div>
+      <div class="properties-table-scroll" role="region" aria-label="20가지 아미노산 특성표, 가로 스크롤 가능" aria-describedby="properties-scroll-hint" tabindex="0">
+        <table id="properties-table" class="properties-table">
+          <caption>20가지 아미노산의 분자량, 산–염기 특성, 등전점 및 Kyte–Doolittle hydropathy 비교</caption>
+          <colgroup><col class="property-name-col" /><col class="property-code-col" /><col class="property-mr-col" /><col span="4" class="property-pk-col" /><col class="property-hydropathy-col" /><col class="property-features-col" /></colgroup>
+          <thead><tr>
+            <th scope="col">아미노산</th><th scope="col">약어</th><th scope="col" class="property-number">M<sub>r</sub></th>
+            <th scope="col" class="property-number">pK<sub>1</sub><small>α-COOH</small></th>
+            <th scope="col" class="property-number">pK<sub>2</sub><small>α-NH₃⁺</small></th>
+            <th scope="col" class="property-number">pK<sub>R</sub><small>R group</small></th>
+            <th scope="col" class="property-number">pI</th>
+            <th scope="col" class="property-number">Hydropathy<small>Kyte–Doolittle</small></th>
+            <th scope="col">핵심 특징</th>
+          </tr></thead>
+          ${renderPropertyBodies(filtered)}
+        </table>
+      </div>
+      <aside class="properties-notes" aria-labelledby="properties-notes-title">
+        <h2 id="properties-notes-title" class="eyebrow">REFERENCE NOTES</h2>
+        <dl>
+          <div><dt>M<sub>r</sub> · pKa · pI</dt><dd>M<sub>r</sub>은 상대 분자량(무차원)입니다. pKa 값과 pI는 자유 아미노산의 대표 참고값 및 등전점입니다. 실제 단백질 내부에서는 주변 미세환경에 의해 pKa가 달라질 수 있습니다. pK<sub>R</sub>의 —는 이 표에 곁사슬 pKa 값이 없음을 뜻합니다.</dd></div>
+          <div><dt>Hydropathy</dt><dd>Kyte–Doolittle scale입니다. 양수일수록 상대적으로 소수성(hydrophobic), 음수일수록 상대적으로 친수성(hydrophilic)인 경향을 나타냅니다. 이 값들은 연속적인 물리화학적 척도이며, 단순한 소수성·친수성 이진 분류와 동일하지 않습니다.</dd></div>
+        </dl>
+      </aside>
+    </section>
+  `;
+}
+
+function renderPropertyBodies(acids: readonly AminoAcidProperty[]): string {
+  if (acids.length === 0) return '<tbody><tr><td colspan="9" class="properties-empty"><span>일치하는 아미노산이 없습니다. 검색어 또는 분류를 바꿔 보세요.</span></td></tr></tbody>';
+  return CATEGORY_IDS.map((category) => {
+    const rows = acids.filter((acid) => acid.category === category);
+    if (rows.length === 0) return '';
+    return `<tbody>
+      <tr class="property-group property-group--${category}"><th scope="rowgroup" colspan="9"><span>${CATEGORIES[category].ko} R 그룹</span><small>${rows.length}종</small></th></tr>
+      ${rows.map((acid) => `<tr data-property-id="${acid.id}">
+        <th scope="row"><strong>${escapeHtml(acid.name)}</strong><small>${escapeHtml(acid.koreanName)}</small></th>
+        <td class="property-code">${acid.threeLetter} <span>· ${acid.oneLetter}</span></td>
+        <td class="property-number">${acid.mr}</td>
+        <td class="property-number">${acid.pK1.toFixed(2)}</td>
+        <td class="property-number">${acid.pK2.toFixed(2)}</td>
+        <td class="property-number">${acid.pKR === null ? '—' : acid.pKR.toFixed(2)}</td>
+        <td class="property-number">${acid.pI.toFixed(2)}</td>
+        <td class="property-number">${acid.hydropathy.toFixed(1)}</td>
+        <td><div class="property-features">${acid.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join('')}</div></td>
+      </tr>`).join('')}
+    </tbody>`;
+  }).join('');
+}
+
+function updatePropertiesResults(): void {
+  const table = app.querySelector<HTMLTableElement>('#properties-table');
+  if (!table) return;
+  const filtered = filterProperties(propertiesFilter, propertiesSearch);
+  // Keep the input, filters and scroll container mounted for keyboard/IME use.
+  table.querySelectorAll('tbody').forEach((body) => body.remove());
+  table.insertAdjacentHTML('beforeend', renderPropertyBodies(filtered));
+  const count = app.querySelector('#properties-count');
+  if (count) count.textContent = `${filtered.length} / 20종`;
+  app.querySelectorAll<HTMLButtonElement>('[data-action="properties-filter"]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.filter === propertiesFilter));
+  });
 }
 
 function renderAminoCard(acid: AminoAcid): string {
@@ -687,6 +792,10 @@ app.addEventListener('click', (event) => {
   if (filterLink) activeFilter = filterLink;
 
   switch (target.dataset.action) {
+    case 'properties-filter':
+      propertiesFilter = (target.dataset.filter as CategoryId | 'all') ?? 'all';
+      updatePropertiesResults();
+      break;
     case 'filter':
       activeFilter = (target.dataset.filter as CategoryId | 'all') ?? 'all';
       render();
@@ -738,6 +847,14 @@ app.addEventListener('click', (event) => {
       resetDialogOpen = false;
       render();
       break;
+  }
+});
+
+app.addEventListener('input', (event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.id === 'properties-search') {
+    propertiesSearch = target.value;
+    updatePropertiesResults();
   }
 });
 

@@ -149,6 +149,7 @@ button {
 .primary-nav {
   display: flex;
   align-self: stretch;
+  min-width: 0;
   gap: 1.75rem;
 }
 
@@ -244,11 +245,11 @@ main {
 
 .home-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
   align-items: center;
   min-height: 525px;
-  padding-block: 5.5rem;
-  gap: clamp(3rem, 8vw, 8rem);
+  padding-block: 3.5rem;
+  gap: 2rem;
 }
 
 .hero-copy h1,
@@ -264,7 +265,7 @@ main {
   margin-top: 1rem;
   max-width: 760px;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(3.5rem, 6.6vw, 6rem);
+  font-size: clamp(3.25rem, 5.5vw, 5rem);
   font-weight: 500;
   letter-spacing: -0.055em;
   line-height: 0.98;
@@ -352,79 +353,70 @@ main {
   text-underline-offset: 0.25rem;
 }
 
-.mastery-summary {
-  position: relative;
-  padding: 2.2rem;
-  border-top: 3px solid var(--teal);
-  border-bottom: 1px solid var(--line-strong);
-  background: var(--paper);
+.hero-reference {
+  min-width: 0;
+  margin: 0;
 }
 
-.summary-heading {
+.hero-reference-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: white;
+  transition: border-color 150ms ease;
+}
+
+.hero-reference-scroll:hover,
+.hero-reference-scroll:focus-within {
+  border-color: #86aaa3;
+}
+
+.hero-reference-link {
+  display: block;
+}
+
+.hero-reference-link:focus-visible {
+  outline-offset: -4px;
+}
+
+.hero-reference img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.hero-reference figcaption {
   display: flex;
-  align-items: start;
+  flex-wrap: wrap;
   justify-content: space-between;
+  margin-top: 0.75rem;
+  gap: 0.4rem 1rem;
+  color: #53605e;
+  font-size: 0.8rem;
 }
 
-.summary-heading strong {
-  color: var(--teal-deep);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 4.7rem;
-  font-weight: 500;
-  letter-spacing: -0.06em;
-  line-height: 0.85;
+.hero-reference figcaption a {
+  color: var(--teal);
+  font-weight: 650;
+  text-underline-offset: 0.2rem;
 }
 
-.summary-heading small {
-  margin-left: 0.35rem;
-  color: var(--muted);
-  font-family: inherit;
-  font-size: 1rem;
-  letter-spacing: 0;
+.hero-scroll-hint {
+  display: none;
 }
 
-.progress-track,
 .study-progress {
   overflow: hidden;
   height: 5px;
   background: #e4e9e8;
 }
 
-.progress-track {
-  margin-top: 2.2rem;
-}
-
-.progress-track span,
 .study-progress span {
   display: block;
   height: 100%;
   background: var(--teal);
   transition: width 220ms ease;
-}
-
-.amino-ticks {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 0.45rem;
-  margin-top: 1rem;
-}
-
-.amino-ticks i {
-  display: block;
-  height: 20px;
-  border: 1px solid var(--line-strong);
-  background: #f5f7f6;
-}
-
-.amino-ticks i.is-mastered {
-  border-color: var(--teal);
-  background: var(--teal);
-}
-
-.mastery-summary p {
-  margin: 1.25rem 0 0;
-  color: var(--muted);
-  font-size: 0.9rem;
 }
 
 .start-grid {
@@ -611,6 +603,317 @@ main {
   border-color: var(--teal);
   background: var(--teal);
   color: white;
+}
+
+.properties-intro h1 {
+  color: var(--teal-deep);
+  font-family: Georgia, "Noto Serif KR", "Batang", serif;
+  font-size: clamp(2.1rem, 4vw, 3.6rem);
+  word-break: keep-all;
+}
+
+.properties-structure-reference {
+  margin-top: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+.properties-structure-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  gap: 0.75rem 1rem;
+}
+
+.properties-structure-heading h2 {
+  margin: 0;
+}
+
+.properties-structure-heading a {
+  color: var(--teal);
+  font-size: 0.8rem;
+  text-underline-offset: 0.2rem;
+}
+
+.properties-structure-reference figure {
+  margin: 0;
+}
+
+.properties-structure-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.properties-structure-scroll:focus-visible {
+  outline-offset: -3px;
+}
+
+.properties-structure-scroll img {
+  display: block;
+  width: 100%;
+  min-width: 960px;
+  height: auto;
+  object-fit: contain;
+}
+
+.properties-structure-caption {
+  display: grid;
+  padding: 1rem 1.5rem 1.25rem;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.properties-structure-scroll-hint {
+  display: none;
+}
+
+@media (max-width: 1009px) {
+  .properties-structure-scroll-hint {
+    display: block;
+    color: var(--teal);
+    font-size: 0.75rem;
+  }
+}
+
+.properties-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  margin-top: 3rem;
+  gap: 1.5rem 2rem;
+}
+
+.properties-controls .filter-bar {
+  flex: 1 1 600px;
+  margin-top: 0;
+}
+
+.properties-controls .filter-button {
+  padding-inline: 0.85rem;
+}
+
+.properties-controls .filter-button span {
+  margin-left: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.properties-search {
+  display: grid;
+  flex: 1 1 340px;
+  min-width: 0;
+  gap: 0.4rem;
+  color: var(--teal-deep);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.properties-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: white;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.properties-search input::placeholder {
+  color: #65716e;
+  font-size: 0.85rem;
+}
+
+.properties-search small {
+  color: #53605e;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.properties-reference {
+  margin-bottom: 4rem;
+}
+
+.properties-table-guide {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  gap: 0.4rem 1rem;
+  color: #53605e;
+  font-size: 0.8rem;
+}
+
+.properties-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: white;
+  overscroll-behavior-x: contain;
+}
+
+.properties-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: var(--teal-deep);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.properties-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.property-name-col { width: 180px; }
+.property-code-col { width: 90px; }
+.property-mr-col { width: 65px; }
+.property-pk-col { width: 80px; }
+.property-hydropathy-col { width: 130px; }
+.property-features-col { width: auto; }
+
+.properties-table th,
+.properties-table td {
+  padding: 0.85rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.properties-table thead th {
+  padding-block: 1rem;
+  font-weight: 750;
+}
+
+.properties-table small {
+  display: block;
+  color: #53605e;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.properties-table th[scope="row"] {
+  position: sticky;
+  z-index: 1;
+  left: 0;
+  border-right: 1px solid var(--line);
+  background: white;
+  font-weight: 650;
+}
+
+.properties-table thead th:first-child {
+  position: sticky;
+  z-index: 2;
+  left: 0;
+  border-right: 1px solid var(--line);
+  background: white;
+}
+
+.properties-table th[scope="row"] strong {
+  font-weight: 650;
+}
+
+.properties-table .property-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.properties-table .property-code {
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+.property-code span {
+  color: #53605e;
+  font-weight: 400;
+}
+
+.property-group th {
+  padding-block: 0.6rem;
+  border-bottom-color: var(--line-strong);
+}
+
+.property-group th > span {
+  position: sticky;
+  left: 0.8rem;
+}
+
+.property-group small {
+  display: inline;
+  margin-left: 0.75rem;
+}
+
+.property-group--nonpolar-aliphatic { background: #faf4df; }
+.property-group--aromatic { background: #f9eaee; }
+.property-group--polar-uncharged { background: #eaf5ee; }
+.property-group--acidic { background: #eaf1fa; }
+.property-group--basic { background: #f1ebf7; }
+
+.property-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.property-features span {
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: #445650;
+  font-size: 0.78rem;
+}
+
+.properties-table .properties-empty {
+  padding-block: 2.5rem;
+}
+
+.properties-empty span {
+  position: sticky;
+  left: 0.8rem;
+  display: block;
+  width: min(32rem, calc(100vw - 5rem));
+}
+
+.properties-notes {
+  padding-top: 1.75rem;
+}
+
+.properties-notes h2 {
+  margin: 0;
+}
+
+.properties-notes dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1rem 0 0;
+  gap: 1.5rem 3rem;
+  font-size: 0.85rem;
+}
+
+.properties-notes dt {
+  margin-bottom: 0.35rem;
+  color: var(--teal-deep);
+  font-weight: 750;
+}
+
+.properties-notes dd {
+  margin: 0;
+  color: #53605e;
+  line-height: 1.8;
 }
 
 .amino-grid {
@@ -1619,6 +1922,7 @@ dialog::backdrop {
     grid-row: 2;
     justify-content: space-between;
     overflow-x: auto;
+    overflow-y: hidden;
     margin-top: -0.5rem;
   }
 
@@ -1626,10 +1930,15 @@ dialog::backdrop {
     padding-block: 0.5rem;
   }
 
+  .primary-nav a::after {
+    bottom: 0;
+  }
+
   .home-hero {
+    grid-template-columns: minmax(0, 1fr);
     min-height: auto;
-    padding-block: 4rem;
-    gap: 3rem;
+    padding-block: 2.5rem;
+    gap: 2rem;
   }
 
   .route-grid {
@@ -1644,9 +1953,8 @@ dialog::backdrop {
     margin-top: 2rem;
   }
 
-  .hero-actions .text-link {
-    flex-basis: 100%;
-    width: max-content;
+  .hero-actions {
+    margin-top: 1.75rem;
   }
 
   .category-strip {
@@ -1694,7 +2002,7 @@ dialog::backdrop {
 
   .home-hero {
     grid-template-columns: 1fr;
-    padding-block: 3.4rem;
+    padding-block: 2rem;
   }
 
   .hero-copy h1 {
@@ -1703,8 +2011,24 @@ dialog::backdrop {
     line-height: 1;
   }
 
-  .mastery-summary {
-    max-width: 440px;
+  .hero-reference-link {
+    min-width: 640px;
+  }
+
+  .hero-scroll-hint {
+    display: inline;
+  }
+
+  .properties-notes dl {
+    grid-template-columns: 1fr;
+  }
+
+  .properties-table {
+    min-width: 1080px;
+  }
+
+  .property-name-col {
+    width: 145px;
   }
 
   .category-strip {
@@ -1815,11 +2139,18 @@ dialog::backdrop {
   }
 
   .hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
-    flex-direction: column;
+  }
+
+  .hero-actions .button {
+    padding-inline: 0.5rem;
+    font-size: 0.9rem;
   }
 
   .hero-actions .text-link {
+    grid-column: 1 / -1;
     width: auto;
     text-align: center;
   }
