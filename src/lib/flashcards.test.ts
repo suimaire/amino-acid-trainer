@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { AMINO_ACIDS, AMINO_ACID_BY_ID } from '../data/aminoAcids';
-import { createFlashStructureChoices } from './flashcards';
+import { createFlashStructureChoices, isStructureChoiceCue } from './flashcards';
 
-describe('name to four structures (flashcards)', () => {
+describe('name and 3-letter to four structures (flashcards)', () => {
+  it('offers structure recognition in name and threeLetter cues, not other cues', () => {
+    expect(isStructureChoiceCue('name')).toBe(true);
+    expect(isStructureChoiceCue('threeLetter')).toBe(true);
+    expect(isStructureChoiceCue('structure')).toBe(false);
+    expect(isStructureChoiceCue('oneLetter')).toBe(false);
+  });
+
+  it('uses the same four valid structural candidates for every correct 3-letter code', () => {
+    for (const acid of AMINO_ACIDS) {
+      expect(acid.threeLetter).toMatch(/^[A-Z][a-z]{2}$/);
+      const options = createFlashStructureChoices(acid, () => 0.37);
+      expect(options).toHaveLength(4);
+      expect(options.filter((candidate) => candidate.threeLetter === acid.threeLetter)).toHaveLength(1);
+      expect(new Set(options.map((candidate) => candidate.smiles)).size).toBe(4);
+    }
+  });
+
   it('includes each exact structure exactly once among four unique choices', () => {
     for (const acid of AMINO_ACIDS) {
       for (const seed of [0, 0.23, 0.42, 0.99]) {
