@@ -32,6 +32,11 @@ const STRUCTURAL_NEIGHBORS: Record<string, readonly string[]> = {
   valine: ['leucine', 'isoleucine', 'alanine', 'threonine'],
 };
 
+/** Both printed full names and three-letter codes quiz structural recognition. */
+export function isStructureChoiceCue(cue: string): boolean {
+  return cue === 'name' || cue === 'threeLetter';
+}
+
 /** Exactly four unique, verified SMILES structures; one answer, three decoys. */
 export function createFlashStructureChoices(
   acid: AminoAcid,
