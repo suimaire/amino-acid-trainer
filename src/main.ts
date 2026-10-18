@@ -809,18 +809,52 @@ function renderResetDialog(): string {
 }
 
 function startFlashSession(): void {
-  flashSession = { order: shuffle(AMINO_ACIDS), index: 0, revealed: false };
+  const order = shuffle(AMINO_ACIDS);
+  flashSession = {
+    order,
+    structureChoices: order.map((acid) => createFlashStructureChoices(acid)),
+    index: 0,
+    revealed: false,
+    selectedStructureId: null,
+    graded: false,
+  };
+  render();
+}
+
+function advanceFlashCard(): void {
+  if (!flashSession || !flashSession.revealed) return;
+  flashSession.index += 1;
+  flashSession.revealed = false;
+  flashSession.selectedStructureId = null;
+  flashSession.graded = false;
+  render();
+}
+
+function selectFlashStructure(acidId: string): void {
+  const session = flashSession;
+  if (!session || flashCue !== 'name' || session.revealed) return;
+  const acid = session.order[session.index];
+  if (!acid || !session.structureChoices[session.index]?.some((option) => option.id === acidId)) return;
+
+  session.selectedStructureId = acidId;
+  session.revealed = true;
+  // A card can be viewed again by switching cues, but must never be graded twice.
+  if (!session.graded) {
+    changeMastery(acid.id, acidId === acid.id ? 1 : -1);
+    session.graded = true;
+  }
   render();
 }
 
 function rateFlashCard(delta: number): void {
-  if (!flashSession || !flashSession.revealed) return;
+  if (!flashSession || !flashSession.revealed || flashCue === 'name') return;
   const acid = flashSession.order[flashSession.index];
   if (!acid) return;
-  changeMastery(acid.id, delta);
-  flashSession.index += 1;
-  flashSession.revealed = false;
-  render();
+  if (!flashSession.graded) {
+    changeMastery(acid.id, delta);
+    flashSession.graded = true;
+  }
+  advanceFlashCard();
 }
 
 function startQuiz(): void {
@@ -877,10 +911,16 @@ app.addEventListener('click', (event) => {
       startFlashSession();
       break;
     case 'reveal':
-      if (flashSession) {
+      if (flashSession && flashCue !== 'name') {
         flashSession.revealed = true;
         render();
       }
+      break;
+    case 'choose-flash-structure':
+      if (target.dataset.acidId) selectFlashStructure(target.dataset.acidId);
+      break;
+    case 'next-flash':
+      if (flashCue === 'name') advanceFlashCard();
       break;
     case 'rate':
       rateFlashCard(Number(target.dataset.delta ?? 0));
@@ -926,7 +966,10 @@ app.addEventListener('change', (event) => {
   const target = event.target as HTMLInputElement | HTMLSelectElement;
   if (target.name === 'flash-cue' || target.id === 'flash-cue-select') {
     flashCue = target.value as FlashCue;
-    if (flashSession) flashSession.revealed = false;
+    if (flashSession) {
+      flashSession.revealed = false;
+      flashSession.selectedStructureId = null;
+    }
     render();
   }
   if (target.name === 'quiz-mode') quizMode = target.value as QuizMode;
@@ -968,6 +1011,17 @@ window.addEventListener('keydown', (event) => {
     return;
   }
 
+  if (flashCue === 'name') {
+    if (!flashSession.revealed && ['1', '2', '3', '4'].includes(event.key)) {
+      event.preventDefault();
+      const chosen = flashSession.structureChoices[flashSession.index]?.[Number(event.key) - 1];
+      if (chosen) selectFlashStructure(chosen.id);
+    } else if (flashSession.revealed && (event.code === 'Space' || event.key === 'Enter')) {
+      event.preventDefault();
+      advanceFlashCard();
+    }
+    return;
+  }
   if (event.code === 'Space' && !flashSession.revealed) {
     event.preventDefault();
     flashSession.revealed = true;
