@@ -19,7 +19,7 @@ import {
   shuffle,
 } from './lib/quiz';
 import { createProgressStorage } from './lib/storage';
-import { createFlashStructureChoices } from './lib/flashcards';
+import { createFlashStructureChoices, isStructureChoiceCue } from './lib/flashcards';
 import { renderChemicalStructures } from './ui/structure';
 
 type View = 'home' | 'overview' | 'properties' | 'flashcards' | 'quiz' | 'mastery';
@@ -408,8 +408,8 @@ function renderFlashcards(): string {
         <div class="section-heading">
           <span class="eyebrow">FLASHCARDS</span>
           <h1>무엇을 보고 맞힐까요?</h1>
-          <p>20종을 한 번씩 학습합니다. <b>이름</b> 모드에서는 구조식 4개 중 정답을 고르고,
-            다른 단서 모드에서는 답을 확인한 뒤 스스로 기억 정도를 평가하세요.</p>
+          <p>20종을 한 번씩 학습합니다. <b>이름·3-letter</b> 모드에서는 구조식 4개 중 정답을 고르고,
+            구조식·1-letter 단서 모드에서는 답을 확인한 뒤 스스로 기억 정도를 평가하세요.</p>
         </div>
         <div class="study-setup">
           <fieldset class="segmented-fieldset">
@@ -423,7 +423,7 @@ function renderFlashcards(): string {
               `).join('')}
           </fieldset>
           <button class="button button--primary button--wide" data-action="start-flash">20장 학습 시작</button>
-          <p class="shortcut-note">${flashCue === 'name'
+          <p class="shortcut-note">${isStructureChoiceCue(flashCue)
             ? '<kbd>1</kbd>–<kbd>4</kbd> 구조 선택 <span aria-hidden="true">|</span> <kbd>Space</kbd> 다음 카드'
             : '<kbd>Space</kbd> 답 보기 <span aria-hidden="true">|</span> <kbd>1</kbd> 몰랐음 <span aria-hidden="true">|</span> <kbd>2</kbd> 헷갈림 <span aria-hidden="true">|</span> <kbd>3</kbd> 알았음'}</p>
         </div>
@@ -447,9 +447,9 @@ function renderFlashcards(): string {
   }
 
   const acid = flashSession.order[flashSession.index] as AminoAcid;
-  const structureChoiceMode = flashCue === 'name';
+  const structureChoiceMode = isStructureChoiceCue(flashCue);
   const cueLabel = structureChoiceMode
-    ? 'NAME → STRUCTURE · 4지선다'
+    ? `${flashCue === 'name' ? 'NAME' : '3-LETTER'} → STRUCTURE · 4지선다`
     : `${FLASH_CUE_LABELS[flashCue].toLocaleUpperCase('en-US')} → ?`;
 
   return `
@@ -530,7 +530,7 @@ function renderFlashStructureChoices(
     `;
   }).join('');
   return `
-    <p class="flash-structure-instruction">위 이름에 해당하는 아미노산의 구조식을 고르세요.</p>
+    <p class="flash-structure-instruction">위 ${flashCue === 'threeLetter' ? '3-letter 표기' : '이름'}에 해당하는 아미노산의 구조식을 고르세요.</p>
     <div class="flash-structure-grid" role="group" aria-label="구조식 4개 중 하나 선택">
       ${optionMarkup}
     </div>
@@ -832,7 +832,7 @@ function advanceFlashCard(): void {
 
 function selectFlashStructure(acidId: string): void {
   const session = flashSession;
-  if (!session || flashCue !== 'name' || session.revealed) return;
+  if (!session || !isStructureChoiceCue(flashCue) || session.revealed) return;
   const acid = session.order[session.index];
   if (!acid || !session.structureChoices[session.index]?.some((option) => option.id === acidId)) return;
 
@@ -847,7 +847,7 @@ function selectFlashStructure(acidId: string): void {
 }
 
 function rateFlashCard(delta: number): void {
-  if (!flashSession || !flashSession.revealed || flashCue === 'name') return;
+  if (!flashSession || !flashSession.revealed || isStructureChoiceCue(flashCue)) return;
   const acid = flashSession.order[flashSession.index];
   if (!acid) return;
   if (!flashSession.graded) {
@@ -911,7 +911,7 @@ app.addEventListener('click', (event) => {
       startFlashSession();
       break;
     case 'reveal':
-      if (flashSession && flashCue !== 'name') {
+      if (flashSession && !isStructureChoiceCue(flashCue)) {
         flashSession.revealed = true;
         render();
       }
@@ -920,7 +920,7 @@ app.addEventListener('click', (event) => {
       if (target.dataset.acidId) selectFlashStructure(target.dataset.acidId);
       break;
     case 'next-flash':
-      if (flashCue === 'name') advanceFlashCard();
+      if (isStructureChoiceCue(flashCue)) advanceFlashCard();
       break;
     case 'rate':
       rateFlashCard(Number(target.dataset.delta ?? 0));
@@ -1011,7 +1011,7 @@ window.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (flashCue === 'name') {
+  if (isStructureChoiceCue(flashCue)) {
     if (!flashSession.revealed && ['1', '2', '3', '4'].includes(event.key)) {
       event.preventDefault();
       const chosen = flashSession.structureChoices[flashSession.index]?.[Number(event.key) - 1];
