@@ -16,7 +16,7 @@ describe('name to four structures (flashcards)', () => {
   });
 
   it('always includes a structurally confusable near neighbor', () => {
-    const pairs = [
+    const pairs: Array<readonly [string, string]> = [
       ['leucine', 'isoleucine'],
       ['valine', 'leucine'],
       ['aspartic-acid', 'asparagine'],
