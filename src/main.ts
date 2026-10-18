@@ -19,6 +19,7 @@ import {
   shuffle,
 } from './lib/quiz';
 import { createProgressStorage } from './lib/storage';
+import { createFlashStructureChoices } from './lib/flashcards';
 import { renderChemicalStructures } from './ui/structure';
 
 type View = 'home' | 'overview' | 'properties' | 'flashcards' | 'quiz' | 'mastery';
@@ -26,8 +27,11 @@ type FlashCue = 'structure' | 'name' | 'threeLetter' | 'oneLetter';
 
 interface FlashSession {
   order: AminoAcid[];
+  structureChoices: AminoAcid[][];
   index: number;
   revealed: boolean;
+  selectedStructureId: string | null;
+  graded: boolean;
 }
 
 interface QuizSession {
@@ -87,10 +91,15 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#039;');
 }
 
-function structureSvg(acid: AminoAcid, size: 'card' | 'large' = 'card', concealName = false): string {
-  const label = concealName
+function structureSvg(
+  acid: AminoAcid,
+  size: 'card' | 'large' = 'card',
+  concealName = false,
+  accessibleLabel?: string,
+): string {
+  const label = accessibleLabel ?? (concealName
     ? '정체를 맞힐 아미노산의 이차원 구조식'
-    : `${acid.name}, ${acid.threeLetter}, ${acid.oneLetter}의 이차원 구조식`;
+    : `${acid.name}, ${acid.threeLetter}, ${acid.oneLetter}의 이차원 구조식`);
   return `
     <div class="structure-frame structure-frame--${size}">
       <svg
@@ -399,24 +408,24 @@ function renderFlashcards(): string {
         <div class="section-heading">
           <span class="eyebrow">FLASHCARDS</span>
           <h1>무엇을 보고 맞힐까요?</h1>
-          <p>20종을 섞어 한 번씩 제시합니다. 답을 본 뒤 기억 정도를 직접 표시하세요.</p>
+          <p>20종을 한 번씩 학습합니다. <b>이름</b> 모드에서는 구조식 4개 중 정답을 고르고,
+            다른 단서 모드에서는 답을 확인한 뒤 스스로 기억 정도를 평가하세요.</p>
         </div>
         <div class="study-setup">
           <fieldset class="segmented-fieldset">
             <legend>CUE</legend>
             ${(['structure', 'name', 'threeLetter', 'oneLetter'] as const)
-              .map(
-                (cue) => `
-                  <label>
-                    <input type="radio" name="flash-cue" value="${cue}" ${flashCue === cue ? 'checked' : ''} />
-                    <span>${FLASH_CUE_LABELS[cue]}</span>
-                  </label>
-                `,
-              )
-              .join('')}
+              .map((cue) => `
+                <label>
+                  <input type="radio" name="flash-cue" value="${cue}" ${flashCue === cue ? 'checked' : ''} />
+                  <span>${FLASH_CUE_LABELS[cue]}</span>
+                </label>
+              `).join('')}
           </fieldset>
           <button class="button button--primary button--wide" data-action="start-flash">20장 학습 시작</button>
-          <p class="shortcut-note"><kbd>Space</kbd> 답 보기 <span aria-hidden="true">|</span> <kbd>1</kbd> 몰랐음 <span aria-hidden="true">|</span> <kbd>2</kbd> 헷갈림 <span aria-hidden="true">|</span> <kbd>3</kbd> 알았음</p>
+          <p class="shortcut-note">${flashCue === 'name'
+            ? '<kbd>1</kbd>–<kbd>4</kbd> 구조 선택 <span aria-hidden="true">|</span> <kbd>Space</kbd> 다음 카드'
+            : '<kbd>Space</kbd> 답 보기 <span aria-hidden="true">|</span> <kbd>1</kbd> 몰랐음 <span aria-hidden="true">|</span> <kbd>2</kbd> 헷갈림 <span aria-hidden="true">|</span> <kbd>3</kbd> 알았음'}</p>
         </div>
       </section>
     `;
@@ -428,7 +437,7 @@ function renderFlashcards(): string {
         <span class="eyebrow">SESSION COMPLETE</span>
         <strong class="completion-score">20<small>/20</small></strong>
         <h1>한 바퀴를 마쳤습니다.</h1>
-        <p>자기평가 결과는 암기 현황에 반영되었습니다.</p>
+        <p>학습 결과는 기존 암기 현황에 반영되었습니다.</p>
         <div class="button-row">
           <button class="button button--primary" data-action="restart-flash">다시 섞어 학습</button>
           <a class="button button--secondary" href="#mastery">암기 현황 보기</a>
@@ -438,7 +447,11 @@ function renderFlashcards(): string {
   }
 
   const acid = flashSession.order[flashSession.index] as AminoAcid;
-  const cueLabel = `${FLASH_CUE_LABELS[flashCue].toLocaleUpperCase('en-US')} → ?`;
+  const structureChoiceMode = flashCue === 'name';
+  const cueLabel = structureChoiceMode
+    ? 'NAME → STRUCTURE · 4지선다'
+    : `${FLASH_CUE_LABELS[flashCue].toLocaleUpperCase('en-US')} → ?`;
+
   return `
     <section class="page-shell study-shell">
       <div class="study-topline">
@@ -455,20 +468,27 @@ function renderFlashcards(): string {
         </label>
       </div>
       <div class="study-progress"><span style="width:${((flashSession.index + 1) / 20) * 100}%"></span></div>
-      <article class="flash-card ${flashSession.revealed ? 'is-revealed' : ''}" aria-live="polite">
+      <article class="flash-card ${structureChoiceMode ? 'flash-card--structure-choice' : ''} ${flashSession.revealed ? 'is-revealed' : ''}">
         <span class="prompt-label">${cueLabel}</span>
         <div class="flash-cue">${renderFlashCue(acid)}</div>
-        ${
-          flashSession.revealed
+        ${structureChoiceMode
+          ? renderFlashStructureChoices(
+              acid,
+              flashSession.structureChoices[flashSession.index] ?? [],
+              flashSession.selectedStructureId,
+            )
+          : flashSession.revealed
             ? renderFlashAnswer(acid)
             : `
                 <p class="question-copy">이 아미노산은?</p>
                 <button class="button button--primary reveal-button" data-action="reveal">답 보기 <span class="key-hint">Space</span></button>
-              `
-        }
+              `}
       </article>
-      ${
-        flashSession.revealed
+      ${structureChoiceMode
+        ? `<p class="shortcut-note shortcut-note--center">${flashSession.revealed
+            ? '<kbd>Space</kbd>를 눌러 다음 카드로 넘어갈 수 있습니다.'
+            : '<kbd>1</kbd>–<kbd>4</kbd>를 누르거나 구조식을 클릭해 선택하세요.'}</p>`
+        : flashSession.revealed
           ? `
               <div class="rating-panel" aria-label="기억 정도 선택">
                 <span>얼마나 잘 기억했나요?</span>
@@ -479,9 +499,53 @@ function renderFlashcards(): string {
                 </div>
               </div>
             `
-          : '<p class="shortcut-note shortcut-note--center"><kbd>Space</kbd>를 눌러 답을 확인할 수 있습니다.</p>'
-      }
+          : '<p class="shortcut-note shortcut-note--center"><kbd>Space</kbd>를 눌러 답을 확인할 수 있습니다.</p>'}
     </section>
+  `;
+}
+
+function renderFlashStructureChoices(
+  acid: AminoAcid,
+  options: readonly AminoAcid[],
+  chosenId: string | null,
+): string {
+  const answered = chosenId !== null;
+  const isCorrect = chosenId === acid.id;
+  const chosen = answered ? options.find((candidate) => candidate.id === chosenId) : undefined;
+  const optionMarkup = options.map((candidate, index) => {
+    const letter = String.fromCharCode(65 + index);
+    const correctChoice = answered && candidate.id === acid.id;
+    const incorrectChoice = answered && chosenId === candidate.id && !correctChoice;
+    return `
+      <button type="button"
+        class="flash-structure-option${correctChoice ? ' is-correct' : ''}${incorrectChoice ? ' is-incorrect' : ''}"
+        data-action="choose-flash-structure" data-acid-id="${candidate.id}"
+        aria-label="선택지 ${letter}의 구조식${correctChoice ? ' · 정답' : ''}${incorrectChoice ? ' · 선택한 오답' : ''}"
+        ${answered ? 'disabled' : ''}>
+        <span class="flash-option-letter" aria-hidden="true">${letter}</span>
+        ${structureSvg(candidate, 'card', true, `선택지 ${letter}의 아미노산 구조식`)}
+        ${correctChoice ? '<span class="flash-option-result">정답</span>' : ''}
+        ${incorrectChoice ? '<span class="flash-option-result">선택한 답</span>' : ''}
+      </button>
+    `;
+  }).join('');
+  return `
+    <p class="flash-structure-instruction">위 이름에 해당하는 아미노산의 구조식을 고르세요.</p>
+    <div class="flash-structure-grid" role="group" aria-label="구조식 4개 중 하나 선택">
+      ${optionMarkup}
+    </div>
+    ${answered ? `
+      <div class="flash-choice-feedback ${isCorrect ? 'is-correct' : 'is-incorrect'}" role="status" aria-live="polite">
+        <strong>${isCorrect ? '정답입니다!' : '오답입니다.'}</strong>
+        ${!isCorrect && chosen ? `<p>선택한 구조: ${escapeHtml(chosen.name)} (${chosen.threeLetter})</p>` : ''}
+        <p>정답: ${escapeHtml(acid.name)} (${acid.threeLetter} / ${acid.oneLetter})</p>
+        <p><b>곁사슬(R기)</b> ${escapeHtml(acid.sideChain)} · ${escapeHtml(acid.note)}</p>
+        <button class="button button--primary" data-action="next-flash">
+          ${flashSession && flashSession.index === flashSession.order.length - 1 ? '학습 결과 보기' : '다음 카드'}
+          <span class="key-hint">Space</span>
+        </button>
+      </div>
+    ` : ''}
   `;
 }
 
@@ -745,18 +809,52 @@ function renderResetDialog(): string {
 }
 
 function startFlashSession(): void {
-  flashSession = { order: shuffle(AMINO_ACIDS), index: 0, revealed: false };
+  const order = shuffle(AMINO_ACIDS);
+  flashSession = {
+    order,
+    structureChoices: order.map((acid) => createFlashStructureChoices(acid)),
+    index: 0,
+    revealed: false,
+    selectedStructureId: null,
+    graded: false,
+  };
+  render();
+}
+
+function advanceFlashCard(): void {
+  if (!flashSession || !flashSession.revealed) return;
+  flashSession.index += 1;
+  flashSession.revealed = false;
+  flashSession.selectedStructureId = null;
+  flashSession.graded = false;
+  render();
+}
+
+function selectFlashStructure(acidId: string): void {
+  const session = flashSession;
+  if (!session || flashCue !== 'name' || session.revealed) return;
+  const acid = session.order[session.index];
+  if (!acid || !session.structureChoices[session.index]?.some((option) => option.id === acidId)) return;
+
+  session.selectedStructureId = acidId;
+  session.revealed = true;
+  // A card can be viewed again by switching cues, but must never be graded twice.
+  if (!session.graded) {
+    changeMastery(acid.id, acidId === acid.id ? 1 : -1);
+    session.graded = true;
+  }
   render();
 }
 
 function rateFlashCard(delta: number): void {
-  if (!flashSession || !flashSession.revealed) return;
+  if (!flashSession || !flashSession.revealed || flashCue === 'name') return;
   const acid = flashSession.order[flashSession.index];
   if (!acid) return;
-  changeMastery(acid.id, delta);
-  flashSession.index += 1;
-  flashSession.revealed = false;
-  render();
+  if (!flashSession.graded) {
+    changeMastery(acid.id, delta);
+    flashSession.graded = true;
+  }
+  advanceFlashCard();
 }
 
 function startQuiz(): void {
@@ -813,10 +911,16 @@ app.addEventListener('click', (event) => {
       startFlashSession();
       break;
     case 'reveal':
-      if (flashSession) {
+      if (flashSession && flashCue !== 'name') {
         flashSession.revealed = true;
         render();
       }
+      break;
+    case 'choose-flash-structure':
+      if (target.dataset.acidId) selectFlashStructure(target.dataset.acidId);
+      break;
+    case 'next-flash':
+      if (flashCue === 'name') advanceFlashCard();
       break;
     case 'rate':
       rateFlashCard(Number(target.dataset.delta ?? 0));
@@ -862,7 +966,10 @@ app.addEventListener('change', (event) => {
   const target = event.target as HTMLInputElement | HTMLSelectElement;
   if (target.name === 'flash-cue' || target.id === 'flash-cue-select') {
     flashCue = target.value as FlashCue;
-    if (flashSession) flashSession.revealed = false;
+    if (flashSession) {
+      flashSession.revealed = false;
+      flashSession.selectedStructureId = null;
+    }
     render();
   }
   if (target.name === 'quiz-mode') quizMode = target.value as QuizMode;
@@ -904,6 +1011,17 @@ window.addEventListener('keydown', (event) => {
     return;
   }
 
+  if (flashCue === 'name') {
+    if (!flashSession.revealed && ['1', '2', '3', '4'].includes(event.key)) {
+      event.preventDefault();
+      const chosen = flashSession.structureChoices[flashSession.index]?.[Number(event.key) - 1];
+      if (chosen) selectFlashStructure(chosen.id);
+    } else if (flashSession.revealed && (event.code === 'Space' || event.key === 'Enter')) {
+      event.preventDefault();
+      advanceFlashCard();
+    }
+    return;
+  }
   if (event.code === 'Space' && !flashSession.revealed) {
     event.preventDefault();
     flashSession.revealed = true;

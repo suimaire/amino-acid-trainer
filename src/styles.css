@@ -1279,6 +1279,121 @@ select {
   white-space: nowrap;
 }
 
+
+/* Name-cue flashcards: four real structures, revealed only after selection. */
+.flash-card--structure-choice { padding-bottom: clamp(1.4rem, 3vw, 2rem); }
+.flash-card--structure-choice .flash-cue {
+  min-height: auto;
+  padding: 1.3rem 0 1rem;
+}
+.flash-card--structure-choice .cue-word {
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  overflow-wrap: anywhere;
+}
+.flash-structure-instruction {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.flash-structure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  text-align: left;
+}
+.flash-structure-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 194px;
+  padding: 1.4rem 0.55rem 0.55rem;
+  border: 2px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 130ms ease, border-color 130ms ease;
+}
+.flash-structure-option:not(:disabled):hover {
+  border-color: var(--teal);
+  background: #f5faf8;
+}
+.flash-structure-option:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 3px;
+}
+.flash-structure-option .structure-frame {
+  width: 100%;
+  height: 160px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.flash-option-letter {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--teal-deep);
+  font: 800 0.88rem/1 Inter, system-ui, sans-serif;
+}
+.flash-structure-option:disabled { cursor: default; opacity: 1; }
+.flash-structure-option.is-correct {
+  border-color: var(--teal);
+  background: #eff8f5;
+}
+.flash-structure-option.is-incorrect {
+  border-color: var(--danger);
+  background: #fff4f2;
+}
+.flash-option-result {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.4rem;
+  padding: 0.18rem 0.35rem;
+  background: white;
+  color: var(--teal-deep);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.flash-structure-option.is-incorrect .flash-option-result { color: var(--danger); }
+.flash-choice-feedback {
+  margin-top: 1.35rem;
+  padding: 1.15rem 0 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+.flash-choice-feedback > strong {
+  color: var(--teal-deep);
+  font-size: 1.12rem;
+}
+.flash-choice-feedback.is-incorrect > strong { color: var(--danger); }
+.flash-choice-feedback p {
+  margin: 0.45rem 0 0.7rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+}
+.flash-choice-feedback .button { margin-top: 0.6rem; }
+
+@media (max-width: 600px) {
+  /* Preserve legibility of the skeletal formulas on narrow screens. */
+  .flash-structure-grid { grid-template-columns: 1fr; }
+  .flash-structure-option .structure-frame { height: 185px; }
+  .flash-card--structure-choice .flash-cue { padding-block: 1rem; }
+}
+
 .rating-panel {
   display: flex;
   align-items: center;
