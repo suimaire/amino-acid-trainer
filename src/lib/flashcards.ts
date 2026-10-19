@@ -1,5 +1,5 @@
 import { AMINO_ACIDS, AMINO_ACID_BY_ID, type AminoAcid } from '../data/aminoAcids';
-import { shuffle } from './quiz';
+import { shuffle } from './random';
 
 /**
  * Structural near-neighbors for the 20 standard amino acids. The first entry

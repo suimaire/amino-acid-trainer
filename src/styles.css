@@ -1476,6 +1476,29 @@ select {
   font-size: 0.75rem;
 }
 
+
+.quiz-card--structure-choice .quiz-cue {
+  min-height: auto;
+  padding: 1.1rem 0 1.5rem;
+}
+.quiz-card--structure-choice .cue-word {
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  overflow-wrap: anywhere;
+}
+.quiz-card--structure-choice .cue-code {
+  font-size: clamp(3.5rem, 8vw, 5.2rem);
+}
+.quiz-structure-grid {
+  margin: 0 auto 1.3rem;
+}
+.quiz-choice-detail {
+  margin: 0.65rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  text-align: left;
+}
+
 .live-score {
   color: var(--muted);
   font-size: 0.86rem;

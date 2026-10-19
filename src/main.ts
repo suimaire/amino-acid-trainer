@@ -40,6 +40,7 @@ interface QuizSession {
   score: number;
   answered: boolean;
   lastCorrect: boolean | null;
+  selectedAnswer: string | null;
   mistakes: string[];
 }
 
@@ -592,10 +593,13 @@ function renderQuiz(): string {
         <span class="live-score">현재 ${quizSession.score}점</span>
       </div>
       <div class="study-progress"><span style="width:${progress}%"></span></div>
-      <article class="quiz-card" aria-live="polite">
+      <article class="quiz-card${question.mode.endsWith('-structure') ? ' quiz-card--structure-choice' : ''}" aria-live="polite">
         <span class="prompt-label">${quizPrompt(question.mode)}</span>
         <div class="quiz-cue">${renderQuizCue(question)}</div>
-        ${quizSession.answered ? renderQuizFeedback(question, quizSession.lastCorrect === true) : renderQuizAnswerForm(question)}
+        ${question.mode.endsWith('-structure')
+           ? renderQuizStructureChoices(question, quizSession.answered, quizSession.selectedAnswer)
+           : quizSession.answered ? '' : renderQuizAnswerForm(question)}
+         ${quizSession.answered ? renderQuizFeedback(question, quizSession.lastCorrect === true) : ''}
       </article>
     </section>
   `;
@@ -633,6 +637,7 @@ function renderQuizSetup(): string {
 }
 
 function quizPrompt(mode: QuizQuestion['mode']): string {
+  if (mode.endsWith('-structure')) return '해당 아미노산의 구조식을 고르세요.';
   if (mode.endsWith('-name')) return '정확한 영문 이름을 고르세요.';
   if (mode.endsWith('-three')) return '3-letter code를 입력하세요.';
   return '1-letter code를 입력하세요.';
@@ -643,6 +648,34 @@ function renderQuizCue(question: QuizQuestion): string {
   if (question.mode.startsWith('name')) return `<strong class="cue-word">${question.acid.name}</strong>`;
   if (question.mode.startsWith('three')) return `<strong class="cue-code cue-code--three">${question.acid.threeLetter}</strong>`;
   return `<strong class="cue-code">${question.acid.oneLetter}</strong>`;
+}
+
+function renderQuizStructureChoices(
+  question: QuizQuestion,
+  answered: boolean,
+  selectedId: string | null,
+): string {
+  return `
+    <div class="flash-structure-grid quiz-structure-grid" role="group" aria-label="아미노산 구조식 4개 중 정답 선택">
+      ${question.options.map((acid, index) => {
+        const letter = String.fromCharCode(65 + index);
+        const correctChoice = answered && acid.id === question.acid.id;
+        const incorrectChoice = answered && acid.id === selectedId && !correctChoice;
+        return `
+          <button type="button"
+            class="flash-structure-option${correctChoice ? ' is-correct' : ''}${incorrectChoice ? ' is-incorrect' : ''}"
+            data-action="choose-quiz-structure" data-acid-id="${acid.id}"
+            aria-label="선택지 ${letter}의 아미노산 구조식${correctChoice ? ', 정답' : ''}${incorrectChoice ? ', 선택한 오답' : ''}"
+            ${answered ? 'disabled' : ''}>
+            <span class="flash-option-letter" aria-hidden="true">${letter}</span>
+            ${structureSvg(acid, 'card', true, `선택지 ${letter}의 아미노산 구조식`)}
+            ${correctChoice ? '<span class="flash-option-result">정답</span>' : ''}
+            ${incorrectChoice ? '<span class="flash-option-result">선택한 오답</span>' : ''}
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function renderQuizAnswerForm(question: QuizQuestion): string {
@@ -680,6 +713,7 @@ function renderQuizAnswerForm(question: QuizQuestion): string {
 
 function renderQuizFeedback(question: QuizQuestion, correct: boolean): string {
   const isLast = quizSession ? quizSession.index === quizSession.questions.length - 1 : false;
+  const chosen = question.options.find((option) => option.id === quizSession?.selectedAnswer);
   return `
     <div class="quiz-feedback ${correct ? 'is-correct' : 'is-incorrect'}" role="status">
       <span class="feedback-status">${correct ? '정답' : '오답'}</span>
@@ -691,6 +725,12 @@ function renderQuizFeedback(question: QuizQuestion, correct: boolean): string {
         </div>
         ${structureSvg(question.acid)}
       </div>
+      ${chosen && chosen.id !== question.acid.id
+        ? `<p class="quiz-choice-detail">선택한 구조: ${escapeHtml(chosen.name)} (${chosen.threeLetter})</p>`
+        : ''}
+      ${question.mode.endsWith('-structure')
+        ? `<p class="quiz-choice-detail"><strong>곁사슬(R기)</strong> ${escapeHtml(question.acid.sideChain)} — ${escapeHtml(question.acid.note)}</p>`
+        : ''}
       <button class="button button--primary" data-action="next-question">${isLast ? '결과 보기' : '다음 문제'}</button>
     </div>
   `;
@@ -864,6 +904,7 @@ function startQuiz(): void {
     score: 0,
     answered: false,
     lastCorrect: null,
+    selectedAnswer: null,
     mistakes: [],
   };
   render();
@@ -873,6 +914,8 @@ function submitQuizAnswer(answer: string): void {
   if (!quizSession || quizSession.answered) return;
   const question = quizSession.questions[quizSession.index];
   if (!question) return;
+  if (question.mode.endsWith('-structure') && !question.options.some((option) => option.id === answer)) return;
+  quizSession.selectedAnswer = answer;
   const correct = isCorrectAnswer(question, answer);
   quizSession.answered = true;
   quizSession.lastCorrect = correct;
@@ -925,11 +968,15 @@ app.addEventListener('click', (event) => {
     case 'rate':
       rateFlashCard(Number(target.dataset.delta ?? 0));
       break;
+    case 'choose-quiz-structure':
+      if (target.dataset.acidId) submitQuizAnswer(target.dataset.acidId);
+      break;
     case 'next-question':
       if (quizSession?.answered) {
         quizSession.index += 1;
         quizSession.answered = false;
         quizSession.lastCorrect = null;
+        quizSession.selectedAnswer = null;
         render();
       }
       break;
