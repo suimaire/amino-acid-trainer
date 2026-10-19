@@ -1499,6 +1499,18 @@ select {
   text-align: left;
 }
 
+.quiz-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.quiz-back-button {
+  min-height: 40px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+}
 .live-score {
   color: var(--muted);
   font-size: 0.86rem;
@@ -2337,6 +2349,11 @@ dialog::backdrop {
   .footer-bottom {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .quiz-top-actions {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .study-topline > div:first-child {

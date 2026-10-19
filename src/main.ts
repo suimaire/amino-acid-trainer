@@ -590,7 +590,10 @@ function renderQuiz(): string {
           <span class="eyebrow">QUIZ | ${QUIZ_MODE_LABELS[question.mode].toLocaleUpperCase('ko-KR')}</span>
           <span class="study-count">${quizSession.index + 1} / ${quizSession.questions.length}</span>
         </div>
-        <span class="live-score">현재 ${quizSession.score}점</span>
+        <div class="quiz-top-actions">
+          <button class="button button--secondary quiz-back-button" type="button" data-action="exit-quiz">← 퀴즈 설정으로</button>
+          <span class="live-score">현재 ${quizSession.score}점</span>
+        </div>
       </div>
       <div class="study-progress"><span style="width:${progress}%"></span></div>
       <article class="quiz-card${question.mode.endsWith('-structure') ? ' quiz-card--structure-choice' : ''}" aria-live="polite">
@@ -764,6 +767,7 @@ function renderQuizResult(session: QuizSession): string {
       }
       <div class="button-row">
         <button class="button button--primary" data-action="retry-quiz">같은 설정으로 다시</button>
+        <button class="button button--secondary" type="button" data-action="exit-quiz">다른 유형 선택</button>
         <a class="button button--secondary" href="#mastery">암기 현황 보기</a>
       </div>
     </section>
@@ -982,6 +986,10 @@ app.addEventListener('click', (event) => {
       break;
     case 'retry-quiz':
       startQuiz();
+      break;
+    case 'exit-quiz':
+      quizSession = null;
+      render();
       break;
     case 'open-reset':
       resetDialogOpen = true;
