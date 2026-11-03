@@ -14,6 +14,24 @@
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
     <div id="app"></div>
+    <!-- Keep this outside #app: the trainer replaces #app markup when switching views. -->
+    <p class="amino-page-views page-views--standalone" data-page-views hidden></p>
+    <script>
+      (function () {
+        try {
+          if (
+            location.hostname !== 'suimaire.github.io' &&
+            !new URLSearchParams(location.search).has('page-views')
+          ) return;
+          var script = document.createElement('script');
+          script.type = 'module';
+          script.src = 'https://suimaire.github.io/assets/js/page-views.js';
+          document.head.appendChild(script);
+        } catch (_) {
+          // Counter problems must not affect the learning app.
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
