@@ -29,17 +29,6 @@ jobs:
         run: npm ci
       - name: Test
         run: npm test
-      - name: Read current shared visitor count (no write)
-        shell: bash
-        run: |
-          echo "READ_ONLY_PAGE_VIEWS_RESULT_BEGIN"
-          curl --silent --show-error --max-time 20 --request POST \
-            --header 'Content-Type: application/json' \
-            --header 'apikey: sb_publishable_bOM16W0j9Dh6U72M_fNp8Q_HwRZm9tF' \
-            --data '{"p_page_key":"/amino-acid-trainer/"}' \
-            'https://szbmpsvxzrnewyzqiokr.supabase.co/rest/v1/rpc/get_page_view_counts' || true
-          echo
-          echo "READ_ONLY_PAGE_VIEWS_RESULT_END"
       - name: Build
         run: npm run build
       - name: Configure Pages
