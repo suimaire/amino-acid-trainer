@@ -2446,3 +2446,30 @@ dialog::backdrop {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* The counter stays outside #app so navigation and quiz renders cannot reset it. */
+.amino-page-views.page-views--standalone {
+  margin: 0;
+  padding: 0.25rem max(1.5rem, calc((100% - var(--max-width)) / 2)) 1.75rem;
+  background: var(--paper);
+  color: var(--muted);
+  text-align: right;
+}
+
+.amino-page-views[hidden] {
+  display: none;
+}
+
+.amino-page-views .page-views__sep {
+  display: none;
+}
+
+.amino-page-views .page-views__today {
+  margin-right: 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .amino-page-views.page-views--standalone {
+    text-align: left;
+  }
+}
