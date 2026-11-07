@@ -6,6 +6,7 @@ export { shuffle } from './random';
 
 export const QUIZ_MODES = [
   'structure-name',
+  'structure-name-written',
   'structure-three',
   'structure-one',
   'name-structure',
@@ -27,9 +28,10 @@ export interface QuizQuestion {
 }
 
 export const QUIZ_MODE_LABELS: Record<QuizMode, string> = {
-  'structure-name': '구조 → 이름',
+  'structure-name': '구조 → 이름 (객관식)',
+  'structure-name-written': '구조 → 이름 (주관식)',
   'structure-three': '구조 → 3-letter',
-  'structure-one': '구조 → 1-letter',
+  'structure-one': '구조 → 1-letter (주관식)',
   'name-structure': '이름 → 구조',
   'name-three': '이름 → 3-letter',
   'name-one': '이름 → 1-letter',
@@ -66,6 +68,7 @@ export function createQuiz(
 }
 
 export function expectedAnswer(question: QuizQuestion): string {
+  if (question.mode === 'structure-name-written') return question.acid.name;
   if (question.mode.endsWith('-structure')) return question.acid.id;
   if (question.mode.endsWith('-name')) return question.acid.name;
   if (question.mode.endsWith('-three')) return question.acid.threeLetter;
