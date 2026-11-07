@@ -640,6 +640,7 @@ function renderQuizSetup(): string {
 }
 
 function quizPrompt(mode: QuizQuestion['mode']): string {
+  if (mode === 'structure-name-written') return '아미노산의 영문 이름을 직접 입력하세요.';
   if (mode.endsWith('-structure')) return '해당 아미노산의 구조식을 고르세요.';
   if (mode.endsWith('-name')) return '정확한 영문 이름을 고르세요.';
   if (mode.endsWith('-three')) return '3-letter code를 입력하세요.';
@@ -701,15 +702,16 @@ function renderQuizAnswerForm(question: QuizQuestion): string {
       </form>
     `;
   }
-  const maxLength = question.mode.endsWith('-one') ? 1 : 3;
+  const nameAnswer = question.mode === 'structure-name-written';
+  const maxLength = nameAnswer ? 32 : question.mode.endsWith('-one') ? 1 : 3;
   return `
     <form class="answer-form answer-form--text" data-form="quiz-answer">
-      <label for="quiz-answer">정답</label>
+      <label for="quiz-answer">${nameAnswer ? '영문 이름' : '정답'}</label>
       <div>
-        <input id="quiz-answer" name="answer" type="text" maxlength="${maxLength}" autocomplete="off" autocapitalize="characters" spellcheck="false" required autofocus />
+        <input id="quiz-answer" name="answer" type="text" maxlength="${maxLength}" autocomplete="off" autocorrect="off" autocapitalize="${nameAnswer ? 'off' : 'characters'}" spellcheck="false" required autofocus />
         <button class="button button--primary" type="submit">정답 제출</button>
       </div>
-      <p>대소문자는 구분하지 않습니다.</p>
+      <p>${nameAnswer ? '영문 이름 전체를 입력하세요. 대소문자와 앞뒤 공백은 구분하지 않습니다.' : '대소문자는 구분하지 않습니다.'}</p>
     </form>
   `;
 }
@@ -730,6 +732,9 @@ function renderQuizFeedback(question: QuizQuestion, correct: boolean): string {
       </div>
       ${chosen && chosen.id !== question.acid.id
         ? `<p class="quiz-choice-detail">선택한 구조: ${escapeHtml(chosen.name)} (${chosen.threeLetter})</p>`
+        : ''}
+      ${!correct && question.options.length === 0 && quizSession?.selectedAnswer
+        ? `<p class="quiz-choice-detail">입력한 답: ${escapeHtml(quizSession.selectedAnswer)}</p>`
         : ''}
       ${question.mode.endsWith('-structure')
         ? `<p class="quiz-choice-detail"><strong>곁사슬(R기)</strong> ${escapeHtml(question.acid.sideChain)} — ${escapeHtml(question.acid.note)}</p>`
@@ -917,7 +922,7 @@ function startQuiz(): void {
 function submitQuizAnswer(answer: string): void {
   if (!quizSession || quizSession.answered) return;
   const question = quizSession.questions[quizSession.index];
-  if (!question) return;
+  if (!question || !answer.trim()) return;
   if (question.mode.endsWith('-structure') && !question.options.some((option) => option.id === answer)) return;
   quizSession.selectedAnswer = answer;
   const correct = isCorrectAnswer(question, answer);
