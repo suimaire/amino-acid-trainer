@@ -41,6 +41,32 @@ describe('quiz generation and answer normalization', () => {
     }
   });
 
+  it('offers a separate written name mode without multiple-choice hints', () => {
+    expect(QUIZ_MODES).toContain('structure-name-written');
+    const questions = createQuiz('structure-name-written', 20, () => 0.37);
+    expect(questions).toHaveLength(AMINO_ACIDS.length);
+    expect(new Set(questions.map((question) => question.acid.id)).size).toBe(20);
+
+    for (const question of questions) {
+      expect(question.mode).toBe('structure-name-written');
+      expect(question.options).toHaveLength(0);
+      expect(isCorrectAnswer(question, question.acid.name)).toBe(true);
+      expect(isCorrectAnswer(question, `  ${question.acid.name.toUpperCase()}  `)).toBe(true);
+      expect(isCorrectAnswer(question, question.acid.threeLetter)).toBe(false);
+      expect(isCorrectAnswer(question, question.acid.oneLetter)).toBe(false);
+    }
+  });
+
+  it('keeps structure to 1-letter as free-text input and validates its exact code', () => {
+    const questions = createQuiz('structure-one', 20, () => 0.37);
+    expect(questions).toHaveLength(AMINO_ACIDS.length);
+    for (const question of questions) {
+      expect(question.options).toHaveLength(0);
+      expect(isCorrectAnswer(question, question.acid.oneLetter.toLowerCase())).toBe(true);
+      expect(isCorrectAnswer(question, question.acid.name)).toBe(false);
+    }
+  });
+
   it('accepts 3-letter and 1-letter codes case-insensitively', () => {
     const threeQuestion = createQuiz('structure-three', 1, () => 0)[0];
     const oneQuestion = createQuiz('structure-one', 1, () => 0)[0];
