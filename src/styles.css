@@ -93,6 +93,28 @@ button {
   gap: 2rem;
 }
 
+.header-brand {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.header-back {
+  color: var(--muted);
+  font-size: 0.77rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  text-underline-offset: 0.2rem;
+}
+
+.header-back:hover {
+  color: var(--teal-deep);
+  text-decoration: underline;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -2029,7 +2051,7 @@ dialog::backdrop {
 .footer-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line);
   gap: 1rem;

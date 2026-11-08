@@ -127,10 +127,13 @@ function render(): void {
   app.innerHTML = `
     <header class="site-header">
       <div class="header-inner">
-        <a class="brand" href="#home" aria-label="아미노산 트레이너 홈">
-          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>AMINO ACID TRAINER</span>
-        </a>
+        <div class="header-brand">
+          <a class="header-back" href="https://suimaire.github.io/">← HAFS 수업 자료실</a>
+          <a class="brand" href="#home" aria-label="아미노산 트레이너 홈">
+            <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>AMINO ACID TRAINER</span>
+          </a>
+        </div>
         <nav class="primary-nav" aria-label="주요 메뉴">
           ${Object.entries(VIEW_LABELS)
             .map(
@@ -160,7 +163,6 @@ function render(): void {
         <p>구조 비교와 암기를 쉽게 하기 위해 기본 구조식은 비이온화 형태를 중심으로 표시합니다. 실제 수용액에서는 pH와 각 작용기의 pKa에 따라 전하 상태가 달라질 수 있습니다.</p>
       </div>
       <div class="footer-bottom">
-        <a href="https://suimaire.github.io/">← HAFS 생화학 자료</a>
         <span>Standard proteinogenic amino acids | 20</span>
       </div>
       <div class="footer-brand">
